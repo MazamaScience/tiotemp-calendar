@@ -1,0 +1,30 @@
+{
+  "name": "tiotemp",
+  "version": "0.1.0",
+  "description": "A collection of visualization for spatial and temporal air-quality data. ",
+  "main": "src/timeseriesCalendar.js",
+  "scripts": {
+    "test": "node test/test_calendar.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MazamaScience/tiotemp.js.git"
+  },
+  "keywords": [
+    "air-quality",
+    "javascript",
+    "visualization"
+  ],
+  "author": "Hans Martin",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/MazamaScience/tiotemp.js/issues"
+  },
+  "homepage": "https://github.com/MazamaScience/tiotemp.js#readme",
+  "dependencies": {
+    "d3": "^6.5.0",
+    "express": "^4.17.1",
+    "path": "^0.12.7",
+    "underscore": "^1.12.0"
+  }
+}
