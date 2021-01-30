@@ -1,7 +1,7 @@
 // const d3 = typeof require === "function" ? require("d3") : window.d3;
 // const papa = require("papaparse");
 
-var timeseriesCalendar = function () {
+var timeseriesCalendar = function (url) {
 
     "use strict";
 
@@ -56,6 +56,7 @@ var timeseriesCalendar = function () {
             .style("position", "absolute");
     }
 
+    // Parse the data and average it 
     var parseData = function (obj) {
 
         let data = obj.data.map(d => {
@@ -103,12 +104,15 @@ var timeseriesCalendar = function () {
         }
     };
 
-    // For testing 
-    var data_arr = Papa.parse("http://localhost:3000/test_data.csv", {
+    // Stream the data and draw the calendar
+    Papa.parse(url, {
         download: true,
         complete: result => {
 
+            // Parse and aggregate the data
             let data = parseData(result)
+
+            // Get the dates 
             let dates = data.map(d => {
                 return d.date
             })
@@ -119,6 +123,7 @@ var timeseriesCalendar = function () {
             let elem = document.querySelector("div" + el);
             let view = elem.getBoundingClientRect();
 
+            // Define the svg to draw on
             let svg = canvas
                 .data(months)
                 .enter()
@@ -223,6 +228,44 @@ var timeseriesCalendar = function () {
                     }
                 });
 
+            // Make the day cell tooltip/highlight
+            let unitString = "(\u00B5g/m\u00B3)";
+            d3.selectAll("g.day")
+                .on("mouseover", function (d) {
+                    tooltip
+                        .style("visibility", "visible")
+                        .style('left', `${event.pageX + 10}px`)
+                        .style('top', `${event.pageY + 10}px`)
+                        .text(() => {
+                            let cell = (data.filter(h => {
+                                return d3.timeFormat("%Y-%m-%d")(h.date) === d3.timeFormat("%Y-%m-%d")(d);
+                            }))[0];
+                            if (typeof cell !== "undefined") {
+                                return cell.mean.toFixed(1) + unitString;
+                            } else {
+                                return "NA";
+                            }
+
+                        })
+                        .style("text-anchor", "middle")
+                        .style("font-family", "sans-serif")
+                        .style("font-size", "0.7em");
+
+                    d3.select(this)
+                        .select("rect.day-fill")
+                        .style("stroke", "#2D2926")
+                        .style("stroke-width", cellMargin);
+                })
+                .on("mouseout", function (d) {
+                    d3.select(this)
+                        .select("rect.day-fill")
+                        .style("stroke", "transparent");
+
+                    tooltip
+                        .style("visibility", "hidden")
+                        .text(""); // Erase the text on mouse out
+                });
+
             // Fill colors
             d3.selectAll("rect.day-fill")
                 .transition()
@@ -230,7 +273,7 @@ var timeseriesCalendar = function () {
                 .attr("fill", (d, i) => {
                     // console.log(d)
                     let fill = data.filter(h => {
-                        return d3.timeFormat("%Y-%m-%d")(h.date) === d3.timeFormat("%Y-%m-%d")(d)
+                        return d3.timeFormat("%Y-%m-%d")(h.date) === d3.timeFormat("%Y-%m-%d")(d);
                     })[0];
 
                     if (typeof fill !== 'undefined') {
@@ -238,10 +281,9 @@ var timeseriesCalendar = function () {
                     } else {
                         return "#F4F4F4";
                     }
-
                 });
-
         }
+
     });
 
 

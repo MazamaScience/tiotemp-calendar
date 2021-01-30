@@ -13,9 +13,6 @@ app.get('/test_data.csv', (req, res) => {
 
 app.use(express.static(__dirname + '/../src'));
 
-
-
-
 app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}`)
 })
