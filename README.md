@@ -29,7 +29,7 @@
 ```html
 <div id="calendar"></div>
 <script type="text/javascript">
-    var cal = new timeseriesCalendar(URL_TO_CSV);
+    var cal = new timeseriesCalendar({url: URL_TO_CSV});
 </script>
 ```
 
