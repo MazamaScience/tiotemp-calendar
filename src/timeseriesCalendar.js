@@ -1,24 +1,26 @@
-// const d3 = typeof require === "function" ? require("d3") : window.d3;
-// const papa = require("papaparse");
 
-var timeseriesCalendar = function (url) {
+
+var timeseriesCalendar = function (options) {
 
     "use strict";
 
-    let el = "#timeseriesCalendar";
+    var defaults = {
+        url: "",
+        el: "#timeseriesCalendar", 
+        size: 900, 
+        colors: ["#ededed", "#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a"], 
+        breaks: [0.01, 8, 20, 35, 55, 100]
+    }
 
-    var self = this;
+    function setDefaults(options, defaults){
+        return Object.assign({}, defaults, options);
+    }
 
-    // this.options = {
-    //     start: new Date(), 
-    //     minDate: null, 
-    //     maxDate: null, 
-    //     data: ""
-    // }; 
+    options = setDefaults(options, defaults);
 
     // Define h and w 
-    var height = 800;
-    var width = 800;
+    var height = options.size;
+    var width = options.size;
 
     // Padding between each cell
     const cellMargin = 2;
@@ -26,7 +28,7 @@ var timeseriesCalendar = function (url) {
     const cellSize = width / (29 + 2 * cellMargin);
 
     // Define calendar canvas
-    var canvas = d3.select(el)
+    var canvas = d3.select(options.el)
         .append("div")
         .attr("class", "grid-container")
         .style("display", "grid")
@@ -89,23 +91,19 @@ var timeseriesCalendar = function (url) {
 
     }
 
-
-    var breaks = [0.01, 8, 20, 35, 55, 100];
-    var colors = ["#ededed", "#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a"];
-
     // Remap the colors
     const colorMap = function (value) {
         if (value === null) {
             return "#F4F4F4";
         } else {
             return d3.scaleThreshold()
-                .domain(breaks)
-                .range(colors)(value);
+                .domain(options.breaks)
+                .range(options.colors)(value);
         }
     };
 
     // Stream the data and draw the calendar
-    Papa.parse(url, {
+    Papa.parse(options.url, {
         download: true,
         complete: result => {
 
@@ -120,7 +118,7 @@ var timeseriesCalendar = function (url) {
             // Create svg for each month of data
             let months = d3.timeMonth.range(dates[0], dates[dates.length - 1]);
 
-            let elem = document.querySelector("div" + el);
+            let elem = document.querySelector("div" + options.el);
             let view = elem.getBoundingClientRect();
 
             // Define the svg to draw on
