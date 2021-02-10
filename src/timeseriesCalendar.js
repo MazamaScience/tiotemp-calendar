@@ -2,6 +2,7 @@ var timeseriesCalendar = function (options) {
 
     "use strict";
 
+    // Default options object
     var defaults = {
         url: "",
         el: "#timeseriesCalendar", 
@@ -12,10 +13,10 @@ var timeseriesCalendar = function (options) {
         units: "(\u00B5g/m\u00B3)"
     }
 
+    // Set defaults to options object
     function setDefaults(options, defaults){
         return Object.assign({}, defaults, options);
     }
-
     options = setDefaults(options, defaults);
 
     // Define h and w 
