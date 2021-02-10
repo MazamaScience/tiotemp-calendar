@@ -1,5 +1,3 @@
-
-
 var timeseriesCalendar = function (options) {
 
     "use strict";
@@ -8,8 +6,10 @@ var timeseriesCalendar = function (options) {
         url: "",
         el: "#timeseriesCalendar", 
         size: 900, 
+        callback: (self, value) => { console.log(self); },  
         colors: ["#ededed", "#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a"], 
-        breaks: [0.01, 8, 20, 35, 55, 100]
+        breaks: [0.01, 8, 20, 35, 55, 100],
+        units: "(\u00B5g/m\u00B3)"
     }
 
     function setDefaults(options, defaults){
@@ -227,7 +227,6 @@ var timeseriesCalendar = function (options) {
                 });
 
             // Make the day cell tooltip/highlight
-            let unitString = "(\u00B5g/m\u00B3)";
             d3.selectAll("g.day")
                 .on("mouseover", function (d) {
                     tooltip
@@ -239,7 +238,7 @@ var timeseriesCalendar = function (options) {
                                 return d3.timeFormat("%Y-%m-%d")(h.date) === d3.timeFormat("%Y-%m-%d")(d);
                             }))[0];
                             if (typeof cell !== "undefined") {
-                                return cell.mean.toFixed(1) + unitString;
+                                return cell.mean.toFixed(1) + " " + options.units;
                             } else {
                                 return "NA";
                             }
@@ -263,6 +262,15 @@ var timeseriesCalendar = function (options) {
                         .style("visibility", "hidden")
                         .text(""); // Erase the text on mouse out
                 });
+            
+            // Callback method on cell click
+            d3.selectAll("g.day")
+                .on("click", function (d) {
+                    let val = data.filter(h => {
+                        return d3.timeFormat("%Y-%m-%d")(h.date) === d3.timeFormat("%Y-%m-%d")(d);
+                    })[0];
+                    options.callback(this, val);
+                }); 
 
             // Fill colors
             d3.selectAll("rect.day-fill")
