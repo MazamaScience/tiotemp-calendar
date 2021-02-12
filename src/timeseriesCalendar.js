@@ -10,7 +10,8 @@ var timeseriesCalendar = function (options) {
         callback: (self, value) => { console.log(self); },  
         colors: ["#ededed", "#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a"], 
         breaks: [0.01, 8, 20, 35, 55, 100],
-        units: "(\u00B5g/m\u00B3)"
+        units: "(\u00B5g/m\u00B3)", 
+        fullYear: true
     }
 
     // Set defaults to options object
@@ -68,6 +69,7 @@ var timeseriesCalendar = function (options) {
                 val: d[1]
             };
         });
+        // console.log(data)
 
         // Reduce the data object to its date group, the val sum of the date group, and average of date group
         let reduced = data.reduce((m, d) => {
@@ -115,16 +117,30 @@ var timeseriesCalendar = function (options) {
             let dates = data.map(d => {
                 return d.date
             })
+                let sd;
+                let ed;
+                // console.log(data)
 
             // Create svg for each month of data
-            let months = d3.timeMonth.range(dates[0], dates[dates.length - 1]);
+            let data_monthly = d3.timeMonth.range(sd, ed);
+            if ( options.fullYear === true) {
+                // TODO: Check for errors with tz 
+                sd = new Date('January 1, 1976 23:15:30');
+                ed = new Date('December 31, 1976 23:15:30');
+                sd.setFullYear(dates[0].getFullYear()); 
+                ed.setFullYear(dates[dates.length - 1].getFullYear());
+            } else {
+                sd = dates[0]; 
+                ed = dates[dates.length - 1];
+            }
+                data_monthly = d3.timeMonth.range(sd, ed);
 
             let elem = document.querySelector("div" + options.el);
             let view = elem.getBoundingClientRect();
 
             // Define the svg to draw on
             let svg = canvas
-                .data(months)
+                .data(data_monthly)
                 .enter()
                 .append("svg")
                 .attr("class", "month-cell")
@@ -144,7 +160,6 @@ var timeseriesCalendar = function (options) {
                 .attr("font-family", "sans-serif")
                 .attr("font-size", cellSize * 0.5)
                 .text(d => {
-                    console.log(d)
                     return d3.timeFormat("%B")(d);
                 });
 
