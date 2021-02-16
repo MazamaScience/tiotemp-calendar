@@ -1,3 +1,12 @@
+/* 
+ * timeseriesCalendar.js
+ *
+ * A javascript module to support the independent usage of 
+ * the tiotemp visualization library.
+ *
+ * Mazama Science 
+ */
+
 var timeseriesCalendar = function (options) {
 
     "use strict";
@@ -5,17 +14,19 @@ var timeseriesCalendar = function (options) {
     // Default options object
     var defaults = {
         url: "",
-        el: "#timeseriesCalendar", 
-        size: 900, 
-        callback: (self, value) => { console.log(self); },  
-        colors: ["#ededed", "#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a"], 
+        el: "#timeseriesCalendar",
+        size: 900,
+        callback: (self, value) => {
+            console.log(self);
+        },
+        colors: ["#ededed", "#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a"],
         breaks: [0.01, 8, 20, 35, 55, 100],
-        units: "(\u00B5g/m\u00B3)", 
-        fullYear: true
+        units: "(\u00B5g/m\u00B3)",
+        fullYear: false
     }
 
     // Set defaults to options object
-    function setDefaults(options, defaults){
+    function setDefaults(options, defaults) {
         return Object.assign({}, defaults, options);
     }
     options = setDefaults(options, defaults);
@@ -63,34 +74,58 @@ var timeseriesCalendar = function (options) {
     // Parse the data and average it 
     var parseData = function (obj) {
 
-        let data = obj.data.map(d => {
-            return {
-                date: d[0].split("T")[0],
-                val: d[1]
-            };
-        });
-        // console.log(data)
+        // store header data
+        let head = obj.data[0];
+        console.log(obj)
 
-        // Reduce the data object to its date group, the val sum of the date group, and average of date group
-        let reduced = data.reduce((m, d) => {
-            if (!m[d.date]) {
-                m[d.date] = {
-                    date: new Date(d.date),
-                    mean: 0,
-                    color: "",
-                    sum: 0,
-                    count: 1
+        // test header contains a header with date and/or time string
+        if (/date|time/.test(head)) {
+            var date_ax = head.findIndex(s => /date|time/.test(s));
+            var val_ax = head.findIndex(s => /(?<!\date|time)$/.test(s));
+        } else {
+            stop("No axis detected!")
+        }
+
+        // if the datetime of the val is equal to the day-object, add it to the day-object
+        // otherwise create a new date-object for day 
+        // [{date: YYYY-mm-dd[i], date-object[i]}, {date: YYYY-mm-dd[i+1], date-object[i+1]}, ...]
+        let data = obj.data
+            .filter(d => {
+                return !/date|time|^\s*$/.test(d)
+            })
+            .map(d => {
+                return {
+                    // store local-date string for grouping
+                    date: (new Date(d[date_ax])).toLocaleDateString(),
+                    // store primitive time 
+                    time: (new Date(d[date_ax])).getTime(),
+                    // handle NaNs
+                    val: (isNaN(Number(d[val_ax])) ? 0 : Number(d[val_ax]))
                 };
+            })
+            .reduce((m, d) => {
+                if (!m[d.date]) { // if date object dne create one 
+                    m[d.date] = {
+                        date: new Date(d.time),
+                        mean: d.val,
+                        color: "",
+                        sum: d.val,
+                        count: 1,
+                        data: [
+                            [d.time, d.val]
+                        ]
+                    };
+                } else { // add date properties
+                    m[d.date].sum += d.val;
+                    m[d.date].count += 1;
+                    m[d.date].mean = m[d.date].sum / m[d.date].count;
+                    m[d.date].color = colorMap(m[d.date].mean);
+                    m[d.date].data.push([d.time, d.val]);
+                }
                 return m;
-            }
-            m[d.date].sum += Number(d.val);
-            m[d.date].count += 1;
-            m[d.date].mean = m[d.date].sum / m[d.date].count;
-            m[d.date].color = colorMap(m[d.date].mean);
-            return m;
-        });
+            }, {});
 
-        return Object.values(reduced).slice(2, -1);
+        return Object.values(data);
 
     }
 
@@ -111,29 +146,35 @@ var timeseriesCalendar = function (options) {
         complete: result => {
 
             // Parse and aggregate the data
-            let data = parseData(result)
+            const data = parseData(result)
+            console.log(data)
 
             // Get the dates 
-            let dates = data.map(d => {
+            const dates = data.map(d => {
                 return d.date
             })
-                let sd;
-                let ed;
-                // console.log(data)
 
-            // Create svg for each month of data
-            let data_monthly = d3.timeMonth.range(sd, ed);
-            if ( options.fullYear === true) {
+            // startdate, enddate
+            var sd, ed;
+
+            // check month-domain parameter
+            if (options.fullYear) {
                 // TODO: Check for errors with tz 
                 sd = new Date('January 1, 1976 23:15:30');
                 ed = new Date('December 31, 1976 23:15:30');
-                sd.setFullYear(dates[0].getFullYear()); 
+                sd.setFullYear(dates[0].getFullYear());
                 ed.setFullYear(dates[dates.length - 1].getFullYear());
             } else {
-                sd = dates[0]; 
+                if (dates[0].getMonth() === dates[dates.length - 1].getMonth()) {
+                    sd = (new Date(dates[0])).setMonth(dates[0].getMonth() - 1);
+                } else {
+                    sd = dates[0];
+                }
                 ed = dates[dates.length - 1];
             }
-                data_monthly = d3.timeMonth.range(sd, ed);
+
+            // Create n-month range
+            const data_monthly = d3.timeMonths(sd, ed);
 
             let elem = document.querySelector("div" + options.el);
             let view = elem.getBoundingClientRect();
@@ -278,7 +319,7 @@ var timeseriesCalendar = function (options) {
                         .style("visibility", "hidden")
                         .text(""); // Erase the text on mouse out
                 });
-            
+
             // Callback method on cell click
             d3.selectAll("g.day")
                 .on("click", function (d) {
@@ -286,7 +327,7 @@ var timeseriesCalendar = function (options) {
                         return d3.timeFormat("%Y-%m-%d")(h.date) === d3.timeFormat("%Y-%m-%d")(d);
                     })[0];
                     options.callback(this, val);
-                }); 
+                });
 
             // Fill colors
             d3.selectAll("rect.day-fill")
@@ -307,9 +348,6 @@ var timeseriesCalendar = function (options) {
         }
 
     });
-
-
-
 
 };
 
