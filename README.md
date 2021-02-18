@@ -1,4 +1,4 @@
-# tiotemp.js
+# tiotemp-calendar
 
 ***This module is still under development***
 
@@ -18,7 +18,7 @@
 3. Install `tiotemp-calendar` in your application by including the javascript file.
 
 ```html
-<script type="text/javascript" src="path/to/tiotemp.js"></script>
+<script type="text/javascript" src="path/to/tiotemp-calendar"></script>
 ```
 
 ## Basic Usage
