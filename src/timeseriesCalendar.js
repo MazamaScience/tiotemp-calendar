@@ -300,7 +300,7 @@ var timeseriesCalendar = function (options) {
                             if (typeof cell !== "undefined") {
                                 return cell.mean.toFixed(1) + " " + options.units;
                             } else {
-                                return "No data.";
+                                return "No data";
                             }
 
                         })
@@ -310,8 +310,8 @@ var timeseriesCalendar = function (options) {
 
                     d3.select(this)
                         .select("rect.day-fill")
-                        .style("stroke", "#2D2926")
-                        .style("stroke-width", options.cellPadding);
+                        .style("stroke", "#605e5d")
+                        .style("stroke-width", 2);
                 })
                 .on("mouseout", function (d) {
                     d3.select(this)
@@ -354,14 +354,20 @@ var timeseriesCalendar = function (options) {
                 .append("svg")
                 .attr("width", 100)
                 .attr("height", "0.7em")
-                .style("padding-left", "1em")
-                .append("text").style("font-family", "sans-serif")
-                .style("color", "grey")
+                .style("padding-left", d => {
+                    let n = d3.selectAll("svg.month-cell")._groups[0].length / 3; 
+                    return n * d3.select(".month-cell")._groups[0][0].clientWidth + 84
+                })
+                .append("text")
+                .style("font-family", "sans-serif")
+                .style("color", "black")
+                .style("opacity", 0.4)
                 .text("Mazama Science")
                 .style("fill", "grey")
                 .style("font-size", "0.5em")
                 .attr("dominant-baseline", "central") 
-                .attr("y", 10);
+                .attr("y", 10).on("mouseover", function (d) { d3.select(this).style("opacity", 1)})
+                .on("mouseout", function (d) { d3.select(this).style("opacity", 0.4)});
         }
 
     });
