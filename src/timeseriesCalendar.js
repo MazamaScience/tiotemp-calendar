@@ -14,7 +14,7 @@ var timeseriesCalendar = function (options) {
     // Default options object
     var defaults = {
         url: "",
-        el: "#timeseriesCalendar",
+        el: "timeseriesCalendar",
         size: 900,
         callback: (self, value) => {
             console.log(self);
@@ -23,7 +23,7 @@ var timeseriesCalendar = function (options) {
         breaks: [0.01, 8, 20, 35, 55, 100],
         units: "(\u00B5g/m\u00B3)",
         fullYear: false,
-        cellPadding: 2, 
+        cellPadding: 2,
         cellSize: 30,
         cellRadius: 3
     }
@@ -36,10 +36,10 @@ var timeseriesCalendar = function (options) {
 
     // Define h and w 
     var height = options.size;
-    var width = options.cellSize * (31 * options.cellPadding); 
+    var width = options.cellSize * (31 * options.cellPadding);
 
     // Define calendar canvas
-    var canvas = d3.select(options.el)
+    var canvas = d3.select('#' + options.el)
         .append("div")
         .attr("class", "grid-container")
         .style("display", "grid")
@@ -51,6 +51,12 @@ var timeseriesCalendar = function (options) {
         .attr("height", height)
         .attr("style", "background-color:white")
         .classed("svg-content", true);
+
+
+
+    // var div = document.getElementById(options.el);
+
+    // div.innerHTML += 'Extra stuff';
 
     // Create tooltip content div
     var tooltip = d3.select(".tooltip-calendar");
@@ -173,7 +179,7 @@ var timeseriesCalendar = function (options) {
             // Create n-month range
             const data_monthly = d3.timeMonths(sd, ed);
 
-            let elem = document.querySelector("div" + options.el);
+            let elem = document.querySelector("div#" + options.el);
             let view = elem.getBoundingClientRect();
 
             // Define the svg month-cells to draw on
@@ -294,7 +300,7 @@ var timeseriesCalendar = function (options) {
                             if (typeof cell !== "undefined") {
                                 return cell.mean.toFixed(1) + " " + options.units;
                             } else {
-                                return "NA";
+                                return "No data.";
                             }
 
                         })
@@ -342,6 +348,20 @@ var timeseriesCalendar = function (options) {
                         return "#F4F4F4";
                     }
                 });
+            
+            // Watermark
+            d3.selectAll('#' + options.el)
+                .append("svg")
+                .attr("width", 100)
+                .attr("height", "0.7em")
+                .style("padding-left", "1em")
+                .append("text").style("font-family", "sans-serif")
+                .style("color", "grey")
+                .text("Mazama Science")
+                .style("fill", "grey")
+                .style("font-size", "0.5em")
+                .attr("dominant-baseline", "central") 
+                .attr("y", 10);
         }
 
     });
