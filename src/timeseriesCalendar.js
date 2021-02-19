@@ -52,12 +52,6 @@ var timeseriesCalendar = function (options) {
         .attr("style", "background-color:white")
         .classed("svg-content", true);
 
-
-
-    // var div = document.getElementById(options.el);
-
-    // div.innerHTML += 'Extra stuff';
-
     // Create tooltip content div
     var tooltip = d3.select(".tooltip-calendar");
     if (tooltip.empty()) {
@@ -71,7 +65,8 @@ var timeseriesCalendar = function (options) {
             .style("border-width", "2px")
             .style("border-radius", "5px")
             .style("color", "#F4F4F4")
-            .style("position", "absolute");
+            .style("position", "absolute")
+            .style("z-index", 100);
     }
 
     // Parse the data and average it 
