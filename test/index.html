@@ -1,8 +1,390 @@
-Test Calendar
-<script src="https://d3js.org/d3.v5.min.js"></script>
-<script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
-<script src="/timeseriesCalendar.js"></script>
-<div id="timeseriesCalendar"></div>
-<script type="text/javascript">
-	var cal = timeseriesCalendar({url: "http://localhost:3000/test_data.csv"});
-</script>
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>tiotemp-calendar</title>
+
+	<!-- CSS -->
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+		integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+	<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+	<!-- JavaScript -->
+	<script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+	<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+	<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
+	<!-- tiotemp-calendar -->
+	<script src="https://d3js.org/d3.v5.min.js"></script>
+	<script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+	<script src="/timeseriesCalendar.js"></script>
+
+
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+		integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
+	</script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+		integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous">
+	</script>
+
+	<style type="text/css">
+		body {
+			width: 100vw;
+			height: 100vh;
+			display: flex;
+			flex-direction: row;
+			align-items: stretch;
+			background-color: #fff;
+		}
+
+		h1 {
+			font-size: 32px;
+			text-align: center;
+			margin-bottom: 16px;
+		}
+
+		input {
+			margin-bottom: 5px;
+		}
+
+		#toolbar {
+			width: 280px;
+			min-width: 280px;
+			height: 100vh;
+			padding: 0px 20px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			background-color: White;
+			box-shadow: gray 0px 0px 15px;
+			z-index: 2;
+		}
+
+		#inputs-section {
+			width: 100%;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+
+		#action-buttons-section {
+			width: 100%;
+			display: flex;
+			flex-direction: row;
+			justify-content: space-around;
+		}
+
+		#action-buttons-section button {
+			width: 90px;
+		}
+
+		#query-inputs-section {
+			display: flex;
+			flex-direction: column;
+			width: 100%;
+		}
+
+		label {
+			font-weight: bold;
+			margin-bottom: 2px;
+		}
+
+		label.form-check-label {
+			font-weight: normal;
+		}
+
+		.text-input {
+			display: flex;
+			flex-direction: column;
+		}
+
+		#content-area {
+			flex-grow: 1;
+			position: relative;
+			z-index: 1;
+		}
+
+		#plot-container {
+			height: 100%;
+			margin: auto;
+			position: relative;
+		}
+
+		#leaflet-map {
+			width: 100%;
+			height: 100%;
+		}
+
+		#error-box {
+			width: 80%;
+			min-width: 200px;
+			margin: auto;
+			padding: 15px;
+			position: absolute;
+			top: 10%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			border: 1px solid Red;
+			border-radius: 5px;
+			background-color: #ffe3e3;
+			font-family: monospace;
+			z-index: 3000;
+		}
+
+		#error-box h1 {
+			font-size: 22px;
+			color: Red;
+		}
+
+		#error-box p {
+			margin: 0px;
+		}
+
+		#instructions-section {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+
+		#instructions-details {
+			padding-right: 15px;
+		}
+
+		#instructions-section h1 {
+			font-size: 1.5rem;
+		}
+
+		#instructions-section ol {
+			font-size: 0.8rem;
+		}
+
+		#instructions-section p {
+			font-size: 0.7rem;
+		}
+
+		.visible {
+			display: block;
+		}
+
+		.invisible {
+			display: none;
+		}
+
+		/* Small devices (landscape phones, less than 768px) */
+		@media (max-width: 769px) {
+			body {
+				flex-direction: column;
+			}
+
+			#toolbar {
+				width: 100vw;
+				height: auto;
+				padding: 0px 15px;
+			}
+
+			#inputs-section {
+				width: auto;
+			}
+
+			#query-inputs-section {
+				margin: auto;
+				flex-direction: row;
+				justify-content: center;
+			}
+
+			#plot-type-list {
+				margin-right: 30px;
+			}
+
+			#instructions-section ol {
+				font-size: 0.8rem;
+			}
+
+			#instructions-section p {
+				text-align: center;
+				font-size: 0.7rem;
+			}
+		}
+	</style>
+</head>
+
+<body>
+	<div id="toolbar" class="pb-1">
+		<!-- page title -->
+		<div>
+			<h1>tiotemp-calendar</h1>
+		</div>
+
+		<!-- Inputs -->
+		<div id="inputs-section" class="mb-2">
+			<div id="query-inputs-section">
+				<!-- Text inputs -->
+				<div class="mb-2">
+
+					<!-- Monitor ID input -->
+					<div class="form-group text-input">
+						<label>Monitor ID</label>
+						<input id="monitorId" type="text" class="form-control input-sm" name="monitorId" size="2">
+					</div>
+
+					<!-- Time range input -->
+					<div class="form-group text-input">
+						<label>Date range</label>
+						<input id="daterange" type="text" class="form-control" name="daterange" value="" />
+					</div>
+
+				</div>
+			</div>
+
+			<!-- How-to and GO buttons -->
+			<div id="action-buttons-section">
+				<button class="btn btn-secondary" type="button" data-toggle="collapse"
+					data-target="#instructions-details">
+					How-to
+				</button>
+
+				<button id="generate-button" class="btn btn-success" type="button">
+					GO
+				</button>
+			</div>
+		</div>
+
+		<div id="instructions-section">
+			<div id="instructions-details" class="collapse">
+				<ol>
+					<li>Type in the ID of the monitor you would like to inspect. You can find a monitor's ID by clicking
+						on its icon in <a href="https://tools.airfire.org/monitoring" target="_blank">this map</a> and
+						scrolling down to the "Selected Monitors" list at the bottom of the page.</li>
+					<li>Select the date range by clicking on the date widget. You can type in the start and end dates or
+						select a start and end day in the calendar popup.</li>
+				</ol>
+
+			</div>
+		</div>
+	</div>
+
+	<div id="content-area">
+		<div id="plot-container">
+
+			<div id="timeseriesCalendar"></div>
+
+			<div id="error-box" class="invisible">
+				<h1>ERROR</h1>
+				<p id="eror-box-message"></p>
+			</div>
+		</div>
+	</div>
+
+	<script type="text/javascript">
+		$(function () {
+
+			// Set default monitor to something. 
+			document.getElementById("monitorId").defaultValue = "530611007_01";
+
+			// Date range picker
+			$("input[name=daterange]").daterangepicker({
+				startDate: moment().subtract(7, "day").startOf("day").toDate(),
+				endDate: moment().startOf("day").toDate(),
+				minDate: "01/01/1998",
+				maxDate: moment().startOf("day").toDate(),
+				opens: "left"
+			}, function (start, end, label) {});
+
+			// On GO click
+			$("#generate-button").click(function () {
+
+				// Do the calendar. 
+				hideErrorBox();
+
+				// Get selected monitor
+				var selectedMonitor = $("#monitorId")[0].value
+
+				// Get selected date range
+				var dateRange = $("input[name=daterange]").val().split(" - ");
+
+				// Convert format of input date range
+				var sd = moment(dateRange[0], "MM/DD/YYYY").format('YYYYMMDD'); 
+				var ed   = moment(dateRange[1], "MM/DD/YYYY").format('YYYYMMDD');
+
+				// Use v4 data
+				const csvServicePath = "https://tools.airfire.org/monitor-data/v4/data"
+
+				// Remove old calendars
+				// TODO: create tiotemp-calendar protoype and init to avoid this. 
+				d3.selectAll(".grid-container").remove();
+
+				var cal = new timeseriesCalendar({
+					url: `${csvServicePath}?databaseversion=4.0&webserviceapi=4.0&csvtype=data&monitors=${selectedMonitor}&startdate=${sd}&enddate=${ed}&outputfiletype=csv`,
+					cellSize: 42
+
+				});
+
+			});
+
+			// Show error box
+			function showErrorBox(errorMessage) {
+				// Set error box text
+				$("#eror-box-message").text(errorMessage);
+
+				$("#error-box").removeClass("invisible");
+				$("#error-box").addClass("visible");
+			}
+
+			// Hide the error box
+			function hideErrorBox() {
+				$("#error-box").removeClass("visible");
+				$("#error-box").addClass("invisible");
+			}
+
+			/**
+			 * Handles server side errors by displaying them in an error message box. Some common errors are translated to more user-friendly text.
+			 * @param error  the error message string from the server
+			 */
+			function handleServerError(serverErrorString) {
+				// Define regex test patterns for common server-side errors
+				const nonexistantMonitorIDPattern =
+					/^Error : Error in createDataList\(infoList, DATA_DIR\) : ↵  Error loading data: Error in monitor_subset\(ws_monitor1, monitorIDs = monitorID\) : ↵  ws_monitor object contains zero monitors↵$/;
+				const multiYearDateRangePattern =
+					/^Error : Error in createDataList\(infoList, DATA_DIR\) : ↵  Error loading data: Error in PWFSLSmoke::monitor_load\(startdate = startdate, enddate = enddate,  : ↵  Requests covering multiple years are not supported↵$/;
+				const noReadingsInDateRangePattern1 =
+					/^Error : Error in createDataList\(infoList, DATA_DIR\) : ↵  Error loading data: \$ operator is invalid for atomic vectors↵$/;
+				const noReadingsInDateRangePattern2 =
+					/^Error : Error in createDataList\(infoList, DATA_DIR\) : ↵  Error loading data: Error in monitor_subset\(ws_monitor, tlim = c\(starttime, endtime\)\) : ↵  ws_monitor object contains zero monitors↵$/;
+
+				// Replace all line breaks in the server error string with a "↵" character
+				const stringifiedError = serverErrorString.replace(/(\r\n|\n|\r)/gm, "↵");
+
+				// Default error box message if the server error string doesn't match an existing test pattern
+				let errorBoxMessage = serverErrorString;
+
+				// Test if the server error string matches a pattern. If so, generate the corresponding error box message
+				if (nonexistantMonitorIDPattern.test(stringifiedError)) {
+					errorBoxMessage = "Could not find monitor with ID: '" + $("#monitorId").val() + "'.";
+				} else if (multiYearDateRangePattern.test(stringifiedError)) {
+					errorBoxMessage = "Date range cannot span multiple years.";
+				} else if (noReadingsInDateRangePattern1.test(stringifiedError) ||
+					noReadingsInDateRangePattern2.test(stringifiedError)) {
+					errorBoxMessage = "Monitor has no data readings in this date range.";
+				}
+
+				// Display final message in the error message box
+				showErrorBox(errorBoxMessage);
+			}
+
+			/**
+			 * Hide the error box when it is clicked.
+			 */
+			$("#error-box").on("click", function () {
+				hideErrorBox();
+			});
+		});
+	</script>
+</body>
+
+</html>
