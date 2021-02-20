@@ -19,8 +19,8 @@ var timeseriesCalendar = function (options) {
         callback: (self, value) => {
             console.log(self);
         },
-        colors: ["#ededed", "#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a"],
-        breaks: [0.01, 8, 20, 35, 55, 100],
+        colors: ["#2ecc71", "#f1c40f", "#e67e22", "#e74c3c", "#9b59b6", "#8c3a3a"], 
+        breaks: [ 12, 35.5, 55.5, 150.5, 250.5], 
         units: "(\u00B5g/m\u00B3)",
         fullYear: false,
         cellPadding: 2,
