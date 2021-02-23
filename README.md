@@ -43,69 +43,69 @@ i.e the data should appear similar to:
 |      ...      |     ...       |
 
 
-#### Options
+### Options
 
 * url 
 
-`timeseriesCalendar({url: ...})`
+#### `timeseriesCalendar({url})`
 
-The URL pointing to the CSV file. Remote or local should work.
+_string_ The URL pointing to the CSV file. Remote or local should work.
 
 * el 
 
-`timeseriesCalendar({el: elementId})`
+#### `timeseriesCalendar({el})`
 
-What element to append the calendar to.
-
-* size 
-
-`timeseriesCalendar({size: 800})`
-
-The calendar size in `px`. 
+_string_ What element to append the svg-calendar-canvas to.
 
 * callback 
 
-`timeseriesCalendar({callback: (self, value) => { ... }})`
+#### `timeseriesCalendar({callback})`
 
-Allow user to input custom callback features for date-cell clicks. 
+_function_ Allow user to input custom callback features for date-cell clicks. 
 
 * colors
 
-`timeseriesCalendar({color: [color1, color2, ...]})`
+#### `timeseriesCalendar({color})`
 
-Specify the color palette for the calendar date-cells.
+_array (string)_ Specify the color palette for the calendar date-cells.
 
 * breaks
 
-`timeseriesCalendar({breaks: [break1, break2, ...]})`
+#### `timeseriesCalendar({breaks})`
 
-Specify the color-breaks for the defined color palette. Note: must be same array length of the color palette. 
+_array (numeric)_ Specify the color-breaks for the defined color palette. Note: must be same array length of the color palette. 
 
 * fullYear
 
-`timeseriesCalendar({fullYear: boolean})`
+#### `timeseriesCalendar({fullYear})`
 
-`true` or `false` to show the full calendar year, regardless of data.
+_boolean_ `true` or `false` to show the full calendar year (12 months), regardless of data provided. 
 
 * cellSize 
 
-`timeseriesCalendar({cellSize: Number})`
+#### `timeseriesCalendar({cellSize})`
 
-The size of each date-cell. Numeric, in pixels.
+_numeric_ The size of each date-cell. Numeric, in pixels.
 
 * cellPadding
 
-`timeseriesCalendar({cellSize: Number})`
+#### `timeseriesCalendar({cellSize})`
 
-The size of each date-cell padding. Numeric, in pixels.
+_numeric_ The size of each date-cell padding. Numeric, in pixels.
 
 * cellRadius
 
-`timeseriesCalendar({cellRadius: Number})`
+#### `timeseriesCalendar({cellRadius})`
 
-The size of each date-cell radius. Numeric, in pixels. 
+_numeric_ The size of each date-cell corner radius. For circles, `cellRadius = cellSize`.  Numeric, in pixels. 
 
-#### Testing
+* columns
+
+#### `timeseriesCalendar({columns})`
+
+_numeric_ The number of columns the calendar should display. `'auto-fill` for automatic columns based on window and month-cell widths. Numeric otherwise.
+
+### Testing
 
 To test the Timeseries calendar with Node: 
 

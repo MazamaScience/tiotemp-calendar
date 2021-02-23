@@ -25,7 +25,7 @@ var timeseriesCalendar = function (options) {
         cellPadding: 4,
         cellSize: 26,
         cellRadius: 6, 
-        columns: 4
+        columns: 3
     }
 
     // Set defaults to options object
