@@ -15,7 +15,6 @@ var timeseriesCalendar = function (options) {
     var defaults = {
         url: "",
         el: "timeseriesCalendar",
-        size: 900,
         callback: (self, value) => {
             console.log(self);
         },
@@ -25,7 +24,8 @@ var timeseriesCalendar = function (options) {
         fullYear: false,
         cellPadding: 2,
         cellSize: 30,
-        cellRadius: 3
+        cellRadius: 3, 
+        columns: "auto-fill"
     }
 
     // Set defaults to options object
@@ -35,17 +35,18 @@ var timeseriesCalendar = function (options) {
     options = setDefaults(options, defaults);
 
     // Define h and w 
-    var height = options.size;
-    var width = options.cellSize * (31 * options.cellPadding);
-
+    var height = (options.cellSize + options.cellPadding) * 5;
+    var width = (options.cellSize + options.cellPadding) * 7
+    
     // Define calendar canvas
     var canvas = d3.select('#' + options.el)
         .append("div")
         .attr("class", "grid-container")
         .style("display", "grid")
-        .style("grid-template-columns", "auto auto auto auto")
+        .style("grid-template-columns", `repeat(${options.columns}, minmax(${width}px, ${width + 20}px))`)
         .style("grid-template-rows", "auto auto auto")
         .style("padding", "5px")
+        .style("justify-self", "center")
         .selectAll("svg")
         .attr("width", width)
         .attr("height", height)
