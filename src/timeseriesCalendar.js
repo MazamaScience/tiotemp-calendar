@@ -22,10 +22,10 @@ var timeseriesCalendar = function (options) {
         breaks: [ 12, 35.5, 55.5, 150.5, 250.5], 
         units: "(\u00B5g/m\u00B3)",
         fullYear: false,
-        cellPadding: 2,
-        cellSize: 30,
-        cellRadius: 3, 
-        columns: "auto-fill"
+        cellPadding: 4,
+        cellSize: 26,
+        cellRadius: 6, 
+        columns: 4
     }
 
     // Set defaults to options object
@@ -34,7 +34,7 @@ var timeseriesCalendar = function (options) {
     }
     options = setDefaults(options, defaults);
 
-    // Define h and w 
+    // Define h and w pf grif-container (month cell)
     var height = (options.cellSize + options.cellPadding) * 5;
     var width = (options.cellSize + options.cellPadding) * 7
     
@@ -156,13 +156,15 @@ var timeseriesCalendar = function (options) {
             // startdate, enddate
             var sd, ed;
 
+            var data_monthly;
+
             // check month-domain parameter
             if (options.fullYear) {
                 // TODO: Check for errors with tz 
-                sd = new Date('January 1, 2000 23:15:30');
-                ed = new Date('December 31, 2000 23:15:30');
+                sd = new Date('01-01-2000');
+                ed = new Date('12-31-2000');
                 sd.setFullYear(dates[0].getFullYear());
-                ed.setFullYear(dates[dates.length - 1].getFullYear());
+                ed.setFullYear(dates[dates.length-1].getFullYear());
             } else {
                 if (dates[0].getMonth() === dates[dates.length - 1].getMonth()) {
                     sd = (new Date(dates[0])).setMonth(dates[0].getMonth() - 1);
@@ -173,7 +175,9 @@ var timeseriesCalendar = function (options) {
             }
 
             // Create n-month range
-            const data_monthly = d3.timeMonths(sd, ed);
+            data_monthly = d3.timeMonths(sd, ed);
+            console.log(data_monthly)
+           // const data_monthly = d3.timeMonths(sd, ed);
 
             let elem = document.querySelector("div#" + options.el);
             let view = elem.getBoundingClientRect();
