@@ -71,11 +71,11 @@ var timeseriesCalendar = function (options) {
     }
 
     // Parse the data and average it 
-    var parseData = function (obj) {
+    var parse = function (obj) {
 
         // store header data
         let head = obj.data[0];
-        console.log(obj)
+        //console.log(obj)
 
         // test header contains a header with date and/or time string
         if (/date|time/.test(head)) {
@@ -139,236 +139,242 @@ var timeseriesCalendar = function (options) {
         }
     };
 
+    var drawCal = function (data) {
+
+        // Get the dates 
+        const dates = data.map(d => {
+            return d.date
+        })
+
+        // startdate, enddate
+        var sd, ed;
+
+        var data_monthly;
+
+        // check month-domain parameter
+        if (options.fullYear) {
+            // TODO: Check for errors with tz 
+            sd = new Date('01-01-2000');
+            ed = new Date('12-31-2000');
+            sd.setFullYear(dates[0].getFullYear());
+            ed.setFullYear(dates[dates.length-1].getFullYear());
+        } else {
+            if (dates[0].getMonth() === dates[dates.length - 1].getMonth()) {
+                sd = (new Date(dates[0])).setMonth(dates[0].getMonth() - 1);
+            } else {
+                sd = dates[0];
+            }
+            ed = dates[dates.length - 1];
+        }
+
+        // Create n-month range
+        data_monthly = d3.timeMonths(sd, ed);
+        //console.log(data_monthly)
+        // const data_monthly = d3.timeMonths(sd, ed);
+
+        let elem = document.querySelector("div#" + options.el);
+        let view = elem.getBoundingClientRect();
+
+        // Define the svg month-cells to draw on
+        let svg = canvas
+            .data(data_monthly)
+            .enter()
+            .append("svg")
+            .attr("class", "month-cell")
+            .attr("width", (options.cellSize * 7) + (options.cellPadding * 8) + options.cellSize)
+            .attr("height", () => {
+                let rows = 8;
+                return (options.cellSize * rows) + (options.cellPadding * (rows + 1));
+            });
+
+        // Add the title of each svg month
+        svg
+            .append("text")
+            .attr("class", "month-label")
+            .attr("x", ((options.cellSize * 7) + options.cellPadding * 8) / 2)
+            .attr("y", "1em")
+            .attr("text-anchor", "middle")
+            .attr("font-family", "sans-serif")
+            .attr("font-size", options.cellSize * 0.5)
+            .text(d => {
+                return d3.timeFormat("%B")(d);
+            });
+
+        // Add the g layer to each day to append rect and text to
+        svg
+            .selectAll("g.day")
+            .data((d, i) => {
+                return d3.timeDays(d, new Date(d.getFullYear(), d.getMonth() + 1, 1));
+            })
+            .enter()
+            .append("g")
+            .attr("class", "day");
+
+        // Add the default color fill
+        svg
+            .selectAll("g.day")
+            .append("rect")
+            .attr("class", "day-fill")
+            .attr("width", options.cellSize)
+            .attr("height", options.cellSize)
+            .attr("rx", options.cellRadius).attr("ry", options.cellRadius) // round corners
+            .attr("fill", "#F4F4F4") // Default colors
+            .style("opacity", 0.95)
+            .attr("x", d => {
+                let n = d3.timeFormat("%w")(d);
+                return ((n * options.cellSize) + (n * options.cellPadding) + options.cellSize / 2 + options.cellPadding);
+            })
+            .attr("y", d => {
+                let firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
+                return ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * options.cellSize) +
+                    ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * options.cellPadding) + options.cellPadding + options.cellSize;
+            });
+
+        // Add the day text to each cell
+        svg
+            .selectAll("g.day")
+            .append("text")
+            .attr("class", "day-text")
+            .attr("text-anchor", "middle")
+            .attr("font-family", "sans-serif")
+            .attr("font-size", options.cellSize * 0.45)
+            .style("opacity", 0.75)
+            .text(d => {
+                return d3.timeFormat("%e")(d);
+            })
+            .attr("x", d => {
+                let n = d3.timeFormat("%w")(d);
+                return ((n * options.cellSize) + (n * options.cellPadding) + options.cellSize + options.cellPadding);
+            })
+            .attr("y", d => {
+                let firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
+                return ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * options.cellSize) +
+                    ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * options.cellPadding) + 
+                    options.cellPadding + options.cellSize + (options.cellSize / 2 + options.cellSize * 0.3 / 2);
+            });
+
+        // Add the weekday text below title (mon, tues, etc)
+        svg
+            .selectAll("g.rect.day")
+            .data((d, i) => {
+                return d3.timeDays(d, new Date(d.getFullYear(), d.getMonth() + 1, 1));
+            })
+            .enter()
+            .append("text")
+            .attr("class", "weekday-text")
+            .attr("text-anchor", "middle")
+            .attr("font-family", "sans-serif")
+            .attr("font-size", options.cellSize * 0.33)
+            .attr("width", options.cellSize)
+            .attr("height", options.cellSize)
+            .attr("x", (d, i) => {
+                if (i < 7) {
+                    let n = d3.timeFormat("%w")(d);
+                    return ((n * options.cellSize) + (n * options.cellPadding) + options.cellSize + options.cellPadding);
+                }
+            })
+            .attr("y", options.cellSize)
+            .text((d, i) => {
+                if (i < 7) {
+                    return d3.timeFormat("%a")(d);
+                }
+            });
+
+        // Make the day cell tooltip/highlight
+        d3.selectAll("g.day")
+            .on("mouseover", function (d) {
+                tooltip
+                    .style("visibility", "visible")
+                    .style('left', `${event.pageX + 10}px`)
+                    .style('top', `${event.pageY + 10}px`)
+                    .text(() => {
+                        let cell = (data.filter(h => {
+                            return d3.timeFormat("%Y-%m-%d")(h.date) === d3.timeFormat("%Y-%m-%d")(d);
+                        }))[0];
+                        if (typeof cell !== "undefined") {
+                            return cell.mean.toFixed(1) + " " + options.units;
+                        } else {
+                            return "No data";
+                        }
+
+                    })
+                    .style("text-anchor", "middle")
+                    .style("font-family", "sans-serif")
+                    .style("font-size", "0.7em");
+
+                d3.select(this)
+                    .select("rect.day-fill")
+                    .style("stroke", "#605e5d")
+                    .style("stroke-width", 2);
+            })
+            .on("mouseout", function (d) {
+                d3.select(this)
+                    .select("rect.day-fill")
+                    .style("stroke", "transparent");
+
+                tooltip
+                    .style("visibility", "hidden")
+                    .text(""); // Erase the text on mouse out
+            });
+
+        // Callback method on cell click
+        d3.selectAll("g.day")
+            .on("click", function (d) {
+                let val = data.filter(h => {
+                    return d3.timeFormat("%Y-%m-%d")(h.date) === d3.timeFormat("%Y-%m-%d")(d);
+                })[0];
+                options.onclick(this, val);
+            });
+
+        // Fill colors
+        d3.selectAll("rect.day-fill")
+            .transition()
+            .duration(500)
+            .attr("fill", (d, i) => {
+                // console.log(d)
+                let fill = data.filter(h => {
+                    return d3.timeFormat("%Y-%m-%d")(h.date) === d3.timeFormat("%Y-%m-%d")(d);
+                })[0];
+
+                if (typeof fill !== 'undefined') {
+                    return fill.color;
+                } else {
+                    return "#F4F4F4";
+                }
+            });
+        
+        // Watermark
+        d3.selectAll('#' + options.el)
+            .append("svg")
+            .attr("width", 100)
+            .attr("height", "0.7em")
+            .style("padding-left", d => {
+                let n = d3.selectAll("svg.month-cell")._groups[0].length / 3; 
+                return n * d3.select(".month-cell")._groups[0][0].clientWidth + 84
+            })
+            .append("text")
+            .style("font-family", "sans-serif")
+            .style("color", "black")
+            .style("opacity", 0.4)
+            .text("Mazama Science")
+            .style("fill", "grey")
+            .style("font-size", "0.5em")
+            .attr("dominant-baseline", "central") 
+            .attr("y", 10).on("mouseover", function (d) { d3.select(this).style("opacity", 1)})
+            .on("mouseout", function (d) { d3.select(this).style("opacity", 0.4)});
+
+    };
+
     // Stream the data and draw the calendar
     Papa.parse(options.url, {
         download: true,
         complete: result => {
 
+            console.log(result)
             // Parse and aggregate the data
-            const data = parseData(result)
+            const data = parse(result)
             console.log(data)
-
-            // Get the dates 
-            const dates = data.map(d => {
-                return d.date
-            })
-
-            // startdate, enddate
-            var sd, ed;
-
-            var data_monthly;
-
-            // check month-domain parameter
-            if (options.fullYear) {
-                // TODO: Check for errors with tz 
-                sd = new Date('01-01-2000');
-                ed = new Date('12-31-2000');
-                sd.setFullYear(dates[0].getFullYear());
-                ed.setFullYear(dates[dates.length-1].getFullYear());
-            } else {
-                if (dates[0].getMonth() === dates[dates.length - 1].getMonth()) {
-                    sd = (new Date(dates[0])).setMonth(dates[0].getMonth() - 1);
-                } else {
-                    sd = dates[0];
-                }
-                ed = dates[dates.length - 1];
-            }
-
-            // Create n-month range
-            data_monthly = d3.timeMonths(sd, ed);
-            console.log(data_monthly)
-           // const data_monthly = d3.timeMonths(sd, ed);
-
-            let elem = document.querySelector("div#" + options.el);
-            let view = elem.getBoundingClientRect();
-
-            // Define the svg month-cells to draw on
-            let svg = canvas
-                .data(data_monthly)
-                .enter()
-                .append("svg")
-                .attr("class", "month-cell")
-                .attr("width", (options.cellSize * 7) + (options.cellPadding * 8) + options.cellSize)
-                .attr("height", () => {
-                    let rows = 8;
-                    return (options.cellSize * rows) + (options.cellPadding * (rows + 1));
-                });
-
-            // Add the title of each svg month
-            svg
-                .append("text")
-                .attr("class", "month-label")
-                .attr("x", ((options.cellSize * 7) + options.cellPadding * 8) / 2)
-                .attr("y", "1em")
-                .attr("text-anchor", "middle")
-                .attr("font-family", "sans-serif")
-                .attr("font-size", options.cellSize * 0.5)
-                .text(d => {
-                    return d3.timeFormat("%B")(d);
-                });
-
-            // Add the g layer to each day to append rect and text to
-            svg
-                .selectAll("g.day")
-                .data((d, i) => {
-                    return d3.timeDays(d, new Date(d.getFullYear(), d.getMonth() + 1, 1));
-                })
-                .enter()
-                .append("g")
-                .attr("class", "day");
-
-            // Add the default color fill
-            svg
-                .selectAll("g.day")
-                .append("rect")
-                .attr("class", "day-fill")
-                .attr("width", options.cellSize)
-                .attr("height", options.cellSize)
-                .attr("rx", options.cellRadius).attr("ry", options.cellRadius) // round corners
-                .attr("fill", "#F4F4F4") // Default colors
-                .style("opacity", 0.95)
-                .attr("x", d => {
-                    let n = d3.timeFormat("%w")(d);
-                    return ((n * options.cellSize) + (n * options.cellPadding) + options.cellSize / 2 + options.cellPadding);
-                })
-                .attr("y", d => {
-                    let firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
-                    return ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * options.cellSize) +
-                        ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * options.cellPadding) + options.cellPadding + options.cellSize;
-                });
-
-            // Add the day text to each cell
-            svg
-                .selectAll("g.day")
-                .append("text")
-                .attr("class", "day-text")
-                .attr("text-anchor", "middle")
-                .attr("font-family", "sans-serif")
-                .attr("font-size", options.cellSize * 0.45)
-                .style("opacity", 0.75)
-                .text(d => {
-                    return d3.timeFormat("%e")(d);
-                })
-                .attr("x", d => {
-                    let n = d3.timeFormat("%w")(d);
-                    return ((n * options.cellSize) + (n * options.cellPadding) + options.cellSize + options.cellPadding);
-                })
-                .attr("y", d => {
-                    let firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
-                    return ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * options.cellSize) +
-                        ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * options.cellPadding) + 
-                        options.cellPadding + options.cellSize + (options.cellSize / 2 + options.cellSize * 0.3 / 2);
-                });
-
-            // Add the weekday text below title (mon, tues, etc)
-            svg
-                .selectAll("g.rect.day")
-                .data((d, i) => {
-                    return d3.timeDays(d, new Date(d.getFullYear(), d.getMonth() + 1, 1));
-                })
-                .enter()
-                .append("text")
-                .attr("class", "weekday-text")
-                .attr("text-anchor", "middle")
-                .attr("font-family", "sans-serif")
-                .attr("font-size", options.cellSize * 0.33)
-                .attr("width", options.cellSize)
-                .attr("height", options.cellSize)
-                .attr("x", (d, i) => {
-                    if (i < 7) {
-                        let n = d3.timeFormat("%w")(d);
-                        return ((n * options.cellSize) + (n * options.cellPadding) + options.cellSize + options.cellPadding);
-                    }
-                })
-                .attr("y", options.cellSize)
-                .text((d, i) => {
-                    if (i < 7) {
-                        return d3.timeFormat("%a")(d);
-                    }
-                });
-
-            // Make the day cell tooltip/highlight
-            d3.selectAll("g.day")
-                .on("mouseover", function (d) {
-                    tooltip
-                        .style("visibility", "visible")
-                        .style('left', `${event.pageX + 10}px`)
-                        .style('top', `${event.pageY + 10}px`)
-                        .text(() => {
-                            let cell = (data.filter(h => {
-                                return d3.timeFormat("%Y-%m-%d")(h.date) === d3.timeFormat("%Y-%m-%d")(d);
-                            }))[0];
-                            if (typeof cell !== "undefined") {
-                                return cell.mean.toFixed(1) + " " + options.units;
-                            } else {
-                                return "No data";
-                            }
-
-                        })
-                        .style("text-anchor", "middle")
-                        .style("font-family", "sans-serif")
-                        .style("font-size", "0.7em");
-
-                    d3.select(this)
-                        .select("rect.day-fill")
-                        .style("stroke", "#605e5d")
-                        .style("stroke-width", 2);
-                })
-                .on("mouseout", function (d) {
-                    d3.select(this)
-                        .select("rect.day-fill")
-                        .style("stroke", "transparent");
-
-                    tooltip
-                        .style("visibility", "hidden")
-                        .text(""); // Erase the text on mouse out
-                });
-
-            // Callback method on cell click
-            d3.selectAll("g.day")
-                .on("click", function (d) {
-                    let val = data.filter(h => {
-                        return d3.timeFormat("%Y-%m-%d")(h.date) === d3.timeFormat("%Y-%m-%d")(d);
-                    })[0];
-                    options.onclick(this, val);
-                });
-
-            // Fill colors
-            d3.selectAll("rect.day-fill")
-                .transition()
-                .duration(500)
-                .attr("fill", (d, i) => {
-                    // console.log(d)
-                    let fill = data.filter(h => {
-                        return d3.timeFormat("%Y-%m-%d")(h.date) === d3.timeFormat("%Y-%m-%d")(d);
-                    })[0];
-
-                    if (typeof fill !== 'undefined') {
-                        return fill.color;
-                    } else {
-                        return "#F4F4F4";
-                    }
-                });
-            
-            // Watermark
-            d3.selectAll('#' + options.el)
-                .append("svg")
-                .attr("width", 100)
-                .attr("height", "0.7em")
-                .style("padding-left", d => {
-                    let n = d3.selectAll("svg.month-cell")._groups[0].length / 3; 
-                    return n * d3.select(".month-cell")._groups[0][0].clientWidth + 84
-                })
-                .append("text")
-                .style("font-family", "sans-serif")
-                .style("color", "black")
-                .style("opacity", 0.4)
-                .text("Mazama Science")
-                .style("fill", "grey")
-                .style("font-size", "0.5em")
-                .attr("dominant-baseline", "central") 
-                .attr("y", 10).on("mouseover", function (d) { d3.select(this).style("opacity", 1)})
-                .on("mouseout", function (d) { d3.select(this).style("opacity", 0.4)});
+            drawCal(data);
         }
 
     });
