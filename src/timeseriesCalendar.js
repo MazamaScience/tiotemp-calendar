@@ -15,7 +15,7 @@ var timeseriesCalendar = function (options) {
     var defaults = {
         url: "",
         el: "timeseriesCalendar",
-        callback: (self, value) => {
+        onclick: (self, value) => {
             console.log(self);
         },
         colors: ["#2ecc71", "#f1c40f", "#e67e22", "#e74c3c", "#9b59b6", "#8c3a3a"], 
@@ -256,7 +256,8 @@ var timeseriesCalendar = function (options) {
                 .attr("y", d => {
                     let firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
                     return ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * options.cellSize) +
-                        ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * options.cellPadding) + options.cellPadding + options.cellSize + (options.cellSize / 2 + options.cellSize * 0.45 / 2);
+                        ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * options.cellPadding) + 
+                        options.cellPadding + options.cellSize + (options.cellSize / 2 + options.cellSize * 0.3 / 2);
                 });
 
             // Add the weekday text below title (mon, tues, etc)
@@ -329,7 +330,7 @@ var timeseriesCalendar = function (options) {
                     let val = data.filter(h => {
                         return d3.timeFormat("%Y-%m-%d")(h.date) === d3.timeFormat("%Y-%m-%d")(d);
                     })[0];
-                    options.callback(this, val);
+                    options.onclick(this, val);
                 });
 
             // Fill colors
