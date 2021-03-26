@@ -2,7 +2,7 @@
 
 ***This module is still under development***
 
-`tiotemp-calendar` is a small collection of useful javascript module visualizations for spatial and temporal air-quality data.
+`tiotemp-calendar` is a small javascript module visualization for temporal data.
 
 ## Getting Started
 
@@ -59,7 +59,7 @@ _string_ What element to append the svg-calendar-canvas to.
 
 * callback 
 
-#### `timeseriesCalendar({callback})`
+#### `timeseriesCalendar({onclick})`
 
 _function_ Allow user to input custom callback features for date-cell clicks. 
 
