@@ -23,6 +23,7 @@ var timeseriesCalendar = function (options) {
         units: "(\u00B5g/m\u00B3)",
         fullYear: false,
         cellPadding: 4,
+        monthPadding: 8,
         cellSize: 26,
         cellRadius: 6, 
         columns: 3
@@ -45,7 +46,7 @@ var timeseriesCalendar = function (options) {
         .style("display", "grid")
         .style("grid-template-columns", `repeat(${options.columns}, minmax(${width}px, ${width + 20}px))`)
         .style("grid-template-rows", "auto auto auto")
-        .style("padding", "5px")
+        .style("padding", "10px")
         .style("justify-self", "center")
         .selectAll("svg")
         .attr("width", width)
@@ -175,25 +176,27 @@ var timeseriesCalendar = function (options) {
 
         var data_monthly = getDomain(dates);
 
-        let elem = document.querySelector("div#" + options.el);
-        let view = elem.getBoundingClientRect();
+        var elem = document.querySelector("div#" + options.el);
+        const view = elem.getBoundingClientRect();
 
         // Month Cell properties
         function monthCellWidth () { 
-            return (options.cellSize * 7) + (options.cellPadding * 8); 
+            return 7 * (options.cellSize + options.cellPadding) + options.cellPadding; 
         };
         function monthCellHeight () { 
-            let rows = 8;
-            return (options.cellSize * rows) + (options.cellPadding * (rows + 1));
+            return (7 * options.cellSize) + (8 * options.cellPadding);
         };
 
-        // Day Cell XY
+        // Day Cell X, Y pos
         function dayCellX (date) { 
             let n = d3.timeFormat("%w")(date);
-            return n * (options.cellSize + options.cellPadding) + options.cellSize + options.cellPadding;
+            return n * (options.cellSize + options.cellPadding) + options.cellPadding;
         };
         function dayCellY (date) {
-             
+            let day1 =  new Date(date.getFullYear(), date.getMonth(), 1); 
+            return (((d3.timeFormat("%U")(date) - d3.timeFormat("%U")(day1)) * options.cellSize) + 
+                ((d3.timeFormat("%U")(date) - d3.timeFormat("%U")(day1)) * options.cellPadding) + 
+                options.cellPadding + options.cellSize);
         };
 
         // Define the svg month-cells to draw on
@@ -202,14 +205,14 @@ var timeseriesCalendar = function (options) {
             .enter()
             .append("svg")
             .attr("class", "month-cell")
-            .attr("width", monthCellWidth() + options.cellSize)
+            .attr("width", monthCellWidth())
             .attr("height", monthCellHeight());
 
         // Add the title of each svg month
         svg
             .append("text")
             .attr("class", "month-label")
-            .attr("x", monthCellWidth() / 2)
+            .attr("x", monthCellWidth() * 0.5 )
             .attr("y", "1em")
             .attr("text-anchor", "middle")
             .attr("font-family", "sans-serif")
@@ -235,17 +238,15 @@ var timeseriesCalendar = function (options) {
             .attr("class", "day-fill")
             .attr("width", options.cellSize)
             .attr("height", options.cellSize)
-            .attr("rx", options.cellRadius).attr("ry", options.cellRadius) // round corners
+            .attr("rx", options.cellRadius) // round
+            .attr("ry", options.cellRadius) // corners
             .attr("fill", "#F4F4F4") // Default colors
             .style("opacity", 0.95)
             .attr("x", d => {
-                let n = d3.timeFormat("%w")(d);
-                return ((n * options.cellSize) + (n * options.cellPadding) + options.cellSize / 2 + options.cellPadding);
+                return dayCellX(d);
             })
             .attr("y", d => {
-                let firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
-                return ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * options.cellSize) +
-                    ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * options.cellPadding) + options.cellPadding + options.cellSize;
+                return dayCellY(d);
             });
 
         // Add the day text to each cell
@@ -260,12 +261,11 @@ var timeseriesCalendar = function (options) {
             .text(d => {
                 return d3.timeFormat("%e")(d);
             })
-            .attr("x", d => { return dayCellX(d); })
+            .attr("x", d => { 
+                return dayCellX(d) + options.cellSize * 0.5; 
+            })
             .attr("y", d => {
-                let firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
-                return ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * options.cellSize) +
-                    ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * options.cellPadding) + 
-                    options.cellPadding + options.cellSize + (options.cellSize / 2 + options.cellSize * 0.3 / 2);
+                return dayCellY(d) + (options.cellSize * 0.5 + options.cellSize * 0.3 / 2);
             });
 
         // Add the weekday text below title (mon, tues, etc)
@@ -284,7 +284,7 @@ var timeseriesCalendar = function (options) {
             .attr("height", options.cellSize)
             .attr("x", (d, i) => {
                 if (i < 7) { 
-                    return dayCellX(d);
+                    return dayCellX(d) + options.cellSize * 0.5;
                 }
             })
             .attr("y", options.cellSize)
@@ -310,7 +310,6 @@ var timeseriesCalendar = function (options) {
                         } else {
                             return "No data";
                         }
-
                     })
                     .style("text-anchor", "middle")
                     .style("font-family", "sans-serif")
