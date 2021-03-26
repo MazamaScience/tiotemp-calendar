@@ -19,7 +19,7 @@ var timeseriesCalendar = function (options) {
             console.log(self);
         },
         colors: ["#2ecc71", "#f1c40f", "#e67e22", "#e74c3c", "#9b59b6", "#8c3a3a"], 
-        breaks: [ 12, 35.5, 55.5, 150.5, 250.5], 
+        breaks: [12, 35.5, 55.5, 150.5, 250.5], 
         units: "(\u00B5g/m\u00B3)",
         fullYear: false,
         cellPadding: 4,
@@ -71,7 +71,7 @@ var timeseriesCalendar = function (options) {
     }
 
     // Parse the data and average it 
-    var parse = function (obj) {
+    function parse (obj) {
 
         // store header data
         let head = obj.data[0];
@@ -129,7 +129,7 @@ var timeseriesCalendar = function (options) {
     }
 
     // Remap the colors
-    const colorMap = function (value) {
+    function colorMap (value) {
         if (value === null) {
             return "#F4F4F4";
         } else {
@@ -139,38 +139,41 @@ var timeseriesCalendar = function (options) {
         }
     };
 
-    var drawCal = function (data) {
-
-        // Get the dates 
-        const dates = data.map(d => {
-            return d.date
-        })
-
+    // Quantum-month domain from Date array
+    function getDomain (arr) { 
+        
         // startdate, enddate
         var sd, ed;
-
-        var data_monthly;
 
         // check month-domain parameter
         if (options.fullYear) {
             // TODO: Check for errors with tz 
             sd = new Date('01-01-2000');
             ed = new Date('12-31-2000');
-            sd.setFullYear(dates[0].getFullYear());
-            ed.setFullYear(dates[dates.length-1].getFullYear());
+            sd.setFullYear(arr[0].getFullYear());
+            ed.setFullYear(arr[arr.length - 1].getFullYear());
         } else {
-            if (dates[0].getMonth() === dates[dates.length - 1].getMonth()) {
-                sd = (new Date(dates[0])).setMonth(dates[0].getMonth() - 1);
+            if (arr[0].getMonth() === arr[arr.length - 1].getMonth()) {
+                sd = (new Date(arr[0])).setMonth(arr[0].getMonth() - 1);
             } else {
-                sd = dates[0];
+                sd = arr[0];
             }
-            ed = dates[dates.length - 1];
+            ed = arr[arr.length - 1];
         }
 
-        // Create n-month range
-        data_monthly = d3.timeMonths(sd, ed);
-        //console.log(data_monthly)
-        // const data_monthly = d3.timeMonths(sd, ed);
+        return d3.timeMonths(sd, ed);
+
+    };
+
+    // Draw Calendar
+    function drawCal (data) {
+
+        // Get the dates 
+        const dates = data.map(d => {
+            return d.date
+        }); 
+
+        var data_monthly = getDomain(dates);
 
         let elem = document.querySelector("div#" + options.el);
         let view = elem.getBoundingClientRect();
@@ -370,10 +373,9 @@ var timeseriesCalendar = function (options) {
         download: true,
         complete: result => {
 
-            console.log(result)
             // Parse and aggregate the data
             const data = parse(result)
-            console.log(data)
+
             drawCal(data);
         }
 
@@ -381,6 +383,7 @@ var timeseriesCalendar = function (options) {
 
 };
 
+// TODO: implement object protoype
 timeseriesCalendar.prototype = {
     init: function () {
         console.log('Inited')
