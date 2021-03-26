@@ -26,17 +26,17 @@ var timeseriesCalendar = function (options) {
         cellSize: 26,
         cellRadius: 6, 
         columns: 3
-    }
+    }; 
 
     // Set defaults to options object
     function setDefaults(options, defaults) {
         return Object.assign({}, defaults, options);
-    }
+    }; 
     options = setDefaults(options, defaults);
 
     // Define h and w pf grif-container (month cell)
     var height = (options.cellSize + options.cellPadding) * 5;
-    var width = (options.cellSize + options.cellPadding) * 7
+    var width = (options.cellSize + options.cellPadding) * 7;
     
     // Define calendar canvas
     var canvas = d3.select('#' + options.el)
@@ -130,6 +130,7 @@ var timeseriesCalendar = function (options) {
 
     // Remap the colors
     function colorMap (value) {
+
         if (value === null) {
             return "#F4F4F4";
         } else {
@@ -137,6 +138,7 @@ var timeseriesCalendar = function (options) {
                 .domain(options.breaks)
                 .range(options.colors)(value);
         }
+
     };
 
     // Quantum-month domain from Date array
@@ -144,7 +146,6 @@ var timeseriesCalendar = function (options) {
         
         // startdate, enddate
         var sd, ed;
-
         // check month-domain parameter
         if (options.fullYear) {
             // TODO: Check for errors with tz 
@@ -160,7 +161,6 @@ var timeseriesCalendar = function (options) {
             }
             ed = arr[arr.length - 1];
         }
-
         return d3.timeMonths(sd, ed);
 
     };
@@ -178,23 +178,38 @@ var timeseriesCalendar = function (options) {
         let elem = document.querySelector("div#" + options.el);
         let view = elem.getBoundingClientRect();
 
+        // Month Cell properties
+        function monthCellWidth () { 
+            return (options.cellSize * 7) + (options.cellPadding * 8); 
+        };
+        function monthCellHeight () { 
+            let rows = 8;
+            return (options.cellSize * rows) + (options.cellPadding * (rows + 1));
+        };
+
+        // Day Cell XY
+        function dayCellX (date) { 
+            let n = d3.timeFormat("%w")(date);
+            return n * (options.cellSize + options.cellPadding) + options.cellSize + options.cellPadding;
+        };
+        function dayCellY (date) {
+             
+        };
+
         // Define the svg month-cells to draw on
         let svg = canvas
             .data(data_monthly)
             .enter()
             .append("svg")
             .attr("class", "month-cell")
-            .attr("width", (options.cellSize * 7) + (options.cellPadding * 8) + options.cellSize)
-            .attr("height", () => {
-                let rows = 8;
-                return (options.cellSize * rows) + (options.cellPadding * (rows + 1));
-            });
+            .attr("width", monthCellWidth() + options.cellSize)
+            .attr("height", monthCellHeight());
 
         // Add the title of each svg month
         svg
             .append("text")
             .attr("class", "month-label")
-            .attr("x", ((options.cellSize * 7) + options.cellPadding * 8) / 2)
+            .attr("x", monthCellWidth() / 2)
             .attr("y", "1em")
             .attr("text-anchor", "middle")
             .attr("font-family", "sans-serif")
@@ -245,10 +260,7 @@ var timeseriesCalendar = function (options) {
             .text(d => {
                 return d3.timeFormat("%e")(d);
             })
-            .attr("x", d => {
-                let n = d3.timeFormat("%w")(d);
-                return ((n * options.cellSize) + (n * options.cellPadding) + options.cellSize + options.cellPadding);
-            })
+            .attr("x", d => { return dayCellX(d); })
             .attr("y", d => {
                 let firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
                 return ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * options.cellSize) +
@@ -271,9 +283,8 @@ var timeseriesCalendar = function (options) {
             .attr("width", options.cellSize)
             .attr("height", options.cellSize)
             .attr("x", (d, i) => {
-                if (i < 7) {
-                    let n = d3.timeFormat("%w")(d);
-                    return ((n * options.cellSize) + (n * options.cellPadding) + options.cellSize + options.cellPadding);
+                if (i < 7) { 
+                    return dayCellX(d);
                 }
             })
             .attr("y", options.cellSize)
@@ -345,26 +356,6 @@ var timeseriesCalendar = function (options) {
                     return "#F4F4F4";
                 }
             });
-        
-        // Watermark
-        d3.selectAll('#' + options.el)
-            .append("svg")
-            .attr("width", 100)
-            .attr("height", "0.7em")
-            .style("padding-left", d => {
-                let n = d3.selectAll("svg.month-cell")._groups[0].length / 3; 
-                return n * d3.select(".month-cell")._groups[0][0].clientWidth + 84
-            })
-            .append("text")
-            .style("font-family", "sans-serif")
-            .style("color", "black")
-            .style("opacity", 0.4)
-            .text("Mazama Science")
-            .style("fill", "grey")
-            .style("font-size", "0.5em")
-            .attr("dominant-baseline", "central") 
-            .attr("y", 10).on("mouseover", function (d) { d3.select(this).style("opacity", 1)})
-            .on("mouseout", function (d) { d3.select(this).style("opacity", 0.4)});
 
     };
 
@@ -376,7 +367,9 @@ var timeseriesCalendar = function (options) {
             // Parse and aggregate the data
             const data = parse(result)
 
+            // Draw the calendar 
             drawCal(data);
+            
         }
 
     });
