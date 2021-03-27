@@ -18,27 +18,27 @@ var timeseriesCalendar = function (options) {
         onclick: (self, value) => {
             console.log(self);
         },
-        colors: ["#2ecc71", "#f1c40f", "#e67e22", "#e74c3c", "#9b59b6", "#8c3a3a"], 
-        breaks: [12, 35.5, 55.5, 150.5, 250.5], 
+        colors: ["#2ecc71", "#f1c40f", "#e67e22", "#e74c3c", "#9b59b6", "#8c3a3a"],
+        breaks: [12, 35.5, 55.5, 150.5, 250.5],
         units: "(\u00B5g/m\u00B3)",
         fullYear: false,
         cellPadding: 4,
         monthPadding: 8,
         cellSize: 26,
-        cellRadius: 6, 
+        cellRadius: 6,
         columns: 3
-    }; 
+    };
 
     // Set defaults to options object
     function setDefaults(options, defaults) {
         return Object.assign({}, defaults, options);
-    }; 
+    };
     options = setDefaults(options, defaults);
 
     // Define h and w pf grif-container (month cell)
     var height = (options.cellSize + options.cellPadding) * 5 - options.monthPadding;
     var width = (options.cellSize + options.cellPadding) * 7 - options.monthPadding;
-    
+
     // Define calendar canvas
     var canvas = d3.select('#' + options.el)
         .append("div")
@@ -72,7 +72,7 @@ var timeseriesCalendar = function (options) {
     }
 
     // Parse the data and average it 
-    function parse (obj) {
+    function parseWithPapa(obj) {
 
         // store header data
         let head = obj.data[0];
@@ -130,7 +130,7 @@ var timeseriesCalendar = function (options) {
     }
 
     // Remap the colors
-    function colorMap (value) {
+    function colorMap(value) {
 
         if (value === null) {
             return "#F4F4F4";
@@ -143,8 +143,8 @@ var timeseriesCalendar = function (options) {
     };
 
     // Quantum-month domain from Date array
-    function getDomain (arr) { 
-        
+    function getDomain(arr) {
+
         // startdate, enddate
         var sd, ed;
         // check month-domain parameter
@@ -167,36 +167,72 @@ var timeseriesCalendar = function (options) {
     };
 
     // Draw Calendar
-    function drawCal (data) {
+    function drawCal(data) {
 
         // Get the dates 
         const dates = data.map(d => {
             return d.date
-        }); 
+        });
 
         var data_monthly = getDomain(dates);
 
         var elem = document.querySelector("div#" + options.el);
         const view = elem.getBoundingClientRect();
 
-        // Month Cell properties
-        function monthCellWidth () { 
-            return 7 * (options.cellSize + options.cellPadding) + options.cellPadding; 
-        };
-        function monthCellHeight () { 
-            return (7 * options.cellSize) + (8 * options.cellPadding);
+        // Month Cell width or height dimension
+        function monthCellDim() {
+            return 7 * (options.cellSize + options.cellPadding) + options.cellPadding;
         };
 
         // Day Cell X, Y pos
-        function dayCellX (date) { 
+        function dayCellX(date) {
             let n = d3.timeFormat("%w")(date);
             return n * (options.cellSize + options.cellPadding) + options.cellPadding;
         };
-        function dayCellY (date) {
-            let day1 =  new Date(date.getFullYear(), date.getMonth(), 1); 
-            return (((d3.timeFormat("%U")(date) - d3.timeFormat("%U")(day1)) * options.cellSize) + 
-                ((d3.timeFormat("%U")(date) - d3.timeFormat("%U")(day1)) * options.cellPadding) + 
+
+        function dayCellY(date) {
+            let day1 = new Date(date.getFullYear(), date.getMonth(), 1);
+            return (((d3.timeFormat("%U")(date) - d3.timeFormat("%U")(day1)) * options.cellSize) +
+                ((d3.timeFormat("%U")(date) - d3.timeFormat("%U")(day1)) * options.cellPadding) +
                 options.cellPadding + options.cellSize);
+        };
+
+        // Draw tooltip callback
+        function drawTooltip(d) {
+            // not super efficent but works
+            tooltip
+                .style("visibility", "visible")
+                .style('left', `${event.pageX + 10}px`)
+                .style('top', `${event.pageY + 10}px`)
+                .text(() => {
+                    let cell = (data.filter(h => {
+                        return d3.timeFormat("%Y-%m-%d")(h.date) === d3.timeFormat("%Y-%m-%d")(d);
+                    }))[0];
+                    if (typeof cell !== "undefined") {
+                        return cell.mean.toFixed(1) + " " + options.units;
+                    } else {
+                        return "No data";
+                    }
+                })
+                .style("text-anchor", "middle")
+                .style("font-family", "sans-serif")
+                .style("font-size", "0.7em");
+
+            d3.select(this)
+                .select("rect.day-fill")
+                .style("stroke", "#605e5d")
+                .style("stroke-width", 2);
+        };
+
+        // Erase tooltip callback
+        function eraseTooltip(d) {
+            d3.select(this)
+                .select("rect.day-fill")
+                .style("stroke", "transparent");
+
+            tooltip
+                .style("visibility", "hidden")
+                .text("");
         };
 
         // Define the svg month-cells to draw on
@@ -205,14 +241,14 @@ var timeseriesCalendar = function (options) {
             .enter()
             .append("svg")
             .attr("class", "month-cell")
-            .attr("width", monthCellWidth())
-            .attr("height", monthCellHeight());
+            .attr("width", monthCellDim)
+            .attr("height", monthCellDim);
 
         // Add the title of each svg month
         svg
             .append("text")
             .attr("class", "month-label")
-            .attr("x", monthCellWidth() * 0.5 )
+            .attr("x", monthCellDim * 0.5)
             .attr("y", "1em")
             .attr("text-anchor", "middle")
             .attr("font-family", "sans-serif")
@@ -261,8 +297,8 @@ var timeseriesCalendar = function (options) {
             .text(d => {
                 return d3.timeFormat("%e")(d);
             })
-            .attr("x", d => { 
-                return dayCellX(d) + options.cellSize * 0.5; 
+            .attr("x", d => {
+                return dayCellX(d) + options.cellSize * 0.5;
             })
             .attr("y", d => {
                 return dayCellY(d) + (options.cellSize * 0.5 + options.cellSize * 0.3 / 2);
@@ -283,7 +319,7 @@ var timeseriesCalendar = function (options) {
             .attr("width", options.cellSize)
             .attr("height", options.cellSize)
             .attr("x", (d, i) => {
-                if (i < 7) { 
+                if (i < 7) {
                     return dayCellX(d) + options.cellSize * 0.5;
                 }
             })
@@ -296,39 +332,8 @@ var timeseriesCalendar = function (options) {
 
         // Make the day cell tooltip/highlight
         d3.selectAll("g.day")
-            .on("mouseover", function (d) {
-                tooltip
-                    .style("visibility", "visible")
-                    .style('left', `${event.pageX + 10}px`)
-                    .style('top', `${event.pageY + 10}px`)
-                    .text(() => {
-                        let cell = (data.filter(h => {
-                            return d3.timeFormat("%Y-%m-%d")(h.date) === d3.timeFormat("%Y-%m-%d")(d);
-                        }))[0];
-                        if (typeof cell !== "undefined") {
-                            return cell.mean.toFixed(1) + " " + options.units;
-                        } else {
-                            return "No data";
-                        }
-                    })
-                    .style("text-anchor", "middle")
-                    .style("font-family", "sans-serif")
-                    .style("font-size", "0.7em");
-
-                d3.select(this)
-                    .select("rect.day-fill")
-                    .style("stroke", "#605e5d")
-                    .style("stroke-width", 2);
-            })
-            .on("mouseout", function (d) {
-                d3.select(this)
-                    .select("rect.day-fill")
-                    .style("stroke", "transparent");
-
-                tooltip
-                    .style("visibility", "hidden")
-                    .text(""); // Erase the text on mouse out
-            });
+            .on("mouseover", drawTooltip)
+            .on("mouseout", eraseTooltip);
 
         // Callback method on cell click
         d3.selectAll("g.day")
@@ -362,13 +367,10 @@ var timeseriesCalendar = function (options) {
     Papa.parse(options.url, {
         download: true,
         complete: result => {
-
             // Parse and aggregate the data
-            const data = parse(result)
-
+            const data = parseWithPapa(result);
             // Draw the calendar 
             drawCal(data);
-            
         }
 
     });
