@@ -36,8 +36,8 @@ var timeseriesCalendar = function (options) {
     options = setDefaults(options, defaults);
 
     // Define h and w pf grif-container (month cell)
-    var height = (options.cellSize + options.cellPadding) * 5;
-    var width = (options.cellSize + options.cellPadding) * 7;
+    var height = (options.cellSize + options.cellPadding) * 5 - options.monthPadding;
+    var width = (options.cellSize + options.cellPadding) * 7 - options.monthPadding;
     
     // Define calendar canvas
     var canvas = d3.select('#' + options.el)
